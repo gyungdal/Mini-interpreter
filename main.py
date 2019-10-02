@@ -31,11 +31,10 @@ if __name__ == "__main__":
             for line in lines:
                 # ascii 값으로 32 이하면 전부 white-space 로 치환
                 for index in range(len(line)):
-                    if index == 0:
-                        continue
                     if ord(line[index]) <= ord(' '):
                         line = line[:index] + ' ' + line[index + 1:]
                 tokens = line.split(' ')
+                tokens = list(filter(lambda a: a != '', tokens))
                 print(tokens)
 
 def token_type(token):
