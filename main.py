@@ -1,24 +1,25 @@
 from sys import argv
-from pyparsing import Word, Literal, alphas, nums
-from enum import Enum
+from re import match, compile
+from enum import Enum, auto
 
-CONSTANT = Word(nums)
-IDENT = Literal("if") | Literal("while")
+SYMBOL_TABLE = {}
 
 class Type(Enum):
-    QUESTION_OPERATOR = Literal("?")
-    LESS_KEYWORD = Literal("<")
-    GREATER_KEYWORD = Literal(">")
-    EQUAL_KEYWORD = Literal("==")
-    COLON = Literal(":")
-    ASSIGNMENT_OPERATOR = Literal("=")
-    SEMI_COLON = Literal(";")
-    PLUS_OPERATOR = Literal("+")
-    MINUS_OPERATOR = Literal("-")
-    STAR_OPERATOR = Literal("*")
-    SLASH_OPERATOR = Literal("/")
-    LEFT_PARENTHESIS = Literal("(")
-    RIGHT_PARENTHESIS = Literal(")")
+    IDENT = auto()
+    CONSTANT = auto()
+    QUESTION_OPERATOR = auto()
+    LESS_KEYWORD = auto()
+    GREATER_KEYWORD = auto()
+    EQUAL_KEYWORD = auto()
+    COLON = auto()
+    ASSIGNMENT_OPERATOR = auto()
+    SEMI_COLON = auto()
+    PLUS_OPERATOR = auto()
+    MINUS_OPERATOR = auto()
+    STAR_OPERATOR = auto()
+    SLASH_OPERATOR = auto()
+    LEFT_PARENTHESIS = auto()
+    RIGHT_PARENTHESIS = auto()
 
 
 if __name__ == "__main__":
@@ -34,12 +35,35 @@ if __name__ == "__main__":
                     if ord(line[index]) <= ord(' '):
                         line = line[:index] + ' ' + line[index + 1:]
                 tokens = line.split(' ')
+                # 빈 문자 제거
                 tokens = list(filter(lambda a: a != '', tokens))
                 print(tokens)
 
 def token_type(token):
-    pass 
-
+    tokenType = {
+        "?" : Type.QUESTION_OPERATOR,
+        "<" : Type.LESS_KEYWORD,
+        ">" : Type.GREATER_KEYWORD,
+        "==" : Type.EQUAL_KEYWORD,
+        ":" : Type.COLON,
+        "=" : Type.ASSIGNMENT_OPERATOR,
+        ";" : Type.SEMI_COLON,
+        "+" : Type.PLUS_OPERATOR,
+        "-" : Type.MINUS_OPERATOR,
+        "*" : Type.STAR_OPERATOR,
+        "/" : Type.SLASH_OPERATOR,
+        "(" : Type.LEFT_PARENTHESIS,
+        ")" : Type.RIGHT_PARENTHESIS
+    }
+    if token in tokenType.keys():
+        return tokenType[token]
+    identCheck = compile("/([a-zA-Z])[a-zA-Z0-0]\w+/g")
+    if identCheck(token) != None:
+        return Type.IDENT
+    numberCheck = compile("\d")
+    if numberCheck(token) != None:
+        return Type.CONSTANT
+    
 def lexical(next_token, token_string):
     if len(token_string) > 1:
         pass
