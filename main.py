@@ -2,13 +2,11 @@ from sys import argv
 from re import match, compile
 from enum import Enum, auto
 
-SYMBOL_TABLE = {}
+#enum 들 정의
 class Flag(Enum):
     YES = auto()
     NO = auto()
     NOP = auto() 
-
-flag : Flag = Flag.YES
 
 class Type(Enum):
     IDENT = auto()
@@ -27,6 +25,11 @@ class Type(Enum):
     SLASH_OPERATOR = auto()
     QUESTION_OPERATOR = auto()
     OPERATOR = PLUS_OPERATOR
+    
+#전역 변수
+SYMBOL_TABLE = {}
+flag : Flag = Flag.YES
+
 
 def token_type(token):
     tokenType = {
