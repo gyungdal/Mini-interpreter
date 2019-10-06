@@ -48,6 +48,38 @@ def token_type(token):
     # 숫자도 아니면 변수
     return Type.IDENT
     
+# == Statements
+def start(tokenList):
+    if statements(tokenList):
+        print("<YES>")
+    else:
+        print("<NO>")
+    
+def statements(tokenList):
+    index = -1
+    for idx, token in enumerate(tokenList):
+        print(token)
+        if token['next_token'] == Type.SEMI_COLON:
+            index = idx
+            break
+    
+    # 내부에 semi colon이 있으면 다른거
+    if index is not -1:
+        # 들어있는 경우
+        return statement(tokenList[:index]) or statements(tokenList[index + 1:])
+    else:
+        return statement(tokenList)
+        
+def statement(tokenList):
+    if len(tokenList) > 2:
+        if tokenList[0]['next_token'].value == Type.IDENT.value and tokenList[1]['next_token'].value == Type.ASSIGNMENT_OPERATOR.value:
+            print("이거 맞음")
+            return True
+        else:
+            return False
+    else:
+        return True
+    
 def lexical(line):
     # ascii 값으로 32 이하면 전부 white-space 로 치환
     for index in range(len(line)):
@@ -74,7 +106,7 @@ def lexical(line):
     print('==> ID: {}; CONST: {}; OP: {}; '.format(tokenTypeList.count(Type.IDENT), 
                                                     tokenTypeList.count(Type.CONSTANT), 
                                                     len([x for x in tokenTypeList if x.value >= Type.OPERATOR.value])), end=' ')
-    print()
+    start(lexicalList)
     next_token = None
 
 if __name__ == "__main__":
