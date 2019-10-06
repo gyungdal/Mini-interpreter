@@ -3,6 +3,12 @@ from re import match, compile
 from enum import Enum, auto
 
 SYMBOL_TABLE = {}
+class Flag(Enum):
+    YES = auto()
+    NO = auto()
+    NOP = auto() 
+
+flag : Flag = Flag.YES
 
 class Type(Enum):
     IDENT = auto()
@@ -50,15 +56,18 @@ def token_type(token):
     
 # == Statements
 def start(tokenList):
-    if statements(tokenList):
+    global flag
+    flag = Flag.YES
+    statements(tokenList)
+    if flag == Flag.YES:
         print("<YES>")
-    else:
+    elif flag == Flag.NO:
         print("<NO>")
     
 def statements(tokenList):
     index = -1
     for idx, token in enumerate(tokenList):
-        print(token)
+        #print(token)
         if token['next_token'] == Type.SEMI_COLON:
             index = idx
             break
@@ -66,20 +75,116 @@ def statements(tokenList):
     # 내부에 semi colon이 있으면 다른거
     if index is not -1:
         # 들어있는 경우
-        return statement(tokenList[:index]) or statements(tokenList[index + 1:])
+        statement(tokenList[:index])
+        statements(tokenList[index + 1:])
     else:
-        return statement(tokenList)
+        statement(tokenList)
         
 def statement(tokenList):
+    global SYMBOL_TABLE
+    global flag
     if len(tokenList) > 2:
-        if tokenList[0]['next_token'].value == Type.IDENT.value and tokenList[1]['next_token'].value == Type.ASSIGNMENT_OPERATOR.value:
-            print("이거 맞음")
-            return True
+        if tokenList[0]['next_token'] == Type.IDENT and tokenList[1]['next_token'] == Type.ASSIGNMENT_OPERATOR:
+            val = expression(tokenList[2:])
+            if type(val) is str :
+                SYMBOL_TABLE[tokenList[0]['token_string']] = "Unknown"
+            else:
+                SYMBOL_TABLE[tokenList[0]['token_string']] = int(val)
         else:
-            return False
-    else:
-        return True
+            flag = Flag.NO
+
+def expression(tokenList):
+    index = -1
+    for idx, token in enumerate(tokenList):
+        #print(token)
+        if token['next_token'] == Type.PLUS_OPERATOR or token['next_token'] == Type.MINUS_OPERATOR:
+            index = idx
+            break
     
+    # 내부에 semi colon이 있으면 다른거
+    if index is not -1:
+        if tokenList[index]['next_token'] == tokenList[index + 1]['next_token']: 
+            t = '-'
+            if tokenList[index]['next_token'] == Type.PLUS_OPERATOR:
+                t = '+'
+            print("<Warning: 중복 연산자({}) 제거>".format(t))
+            temp = tokenList[:index]
+            temp2 = tokenList[index + 1:] 
+            tokenList = temp + temp2
+            flag = Flag.NOP
+        val1 = term(tokenList[:index]) 
+        val2 = expression(tokenList[index + 1:])
+        if tokenList[index]['next_token'] == Type.PLUS_OPERATOR:
+            if type(val1) is str or type(val2) is str:
+                return "Unknown"
+            else:
+                return int(val1) + int(val2)
+        else:
+            if type(val1) is str or type(val2) is str:
+                return "Unknown"
+            else:
+                return int(val1) - int(val2)
+    else:
+        return term(tokenList)
+
+def term(tokenList):
+    index = -1
+    for idx, token in enumerate(tokenList):
+        #print(token)
+        if token['next_token'] == Type.STAR_OPERATOR or token['next_token'] == Type.SLASH_OPERATOR:
+            index = idx
+            break
+    
+    # 내부에 semi colon이 있으면 다른거
+    if index is not -1:
+        val1 = factor(tokenList[:index])
+        val2 = term(tokenList[index + 1:])
+        if tokenList[index]['next_token'] == Type.STAR_OPERATOR:
+            if type(val1) is str or type(val2) is str:
+                return "Unknown"
+            else:
+                return int(val1) * int(val2)
+        else:
+            return 
+            if type(val1) is str or type(val2) is str:
+                return "Unknown"
+            else:
+                return int(val1) / int(val2)
+    else:
+        return factor(tokenList)
+
+def factor(tokenList):
+    global SYMBOL_TABLE
+    global flag
+    type = tokenList[0]['next_token']
+    if type == Type.LEFT_PARENTHESIS:
+        return expression(tokenList[1:len(tokenList) - 1])
+    elif type == Type.IDENT:
+        if tokenList[0]['token_string'] not in SYMBOL_TABLE.keys():
+            print("<Error: 정의 되지 않은 변수({})가 참조됨>".format(tokenList[0]['token_string']))
+            flag = Flag.NOP
+            SYMBOL_TABLE[tokenList[0]['token_string']] = "Unknown"
+        return SYMBOL_TABLE[tokenList[0]['token_string']]
+    elif type == Type.CONSTANT:
+        return int(tokenList[0]['token_string'])
+
+
+def condition(tokenList):
+    global flag
+    if tokenList[0]['next_token'] == Type.LESS_KEYWORD or tokenList[0]['next_token'] == Type.GREATER_KEYWORD or tokenList[0]['next_token'] == Type.EQUAL_KEYWORD:
+        pass
+    else:
+        if flag is not Flag.NOP:
+            flag = Flag.NO
+            
+def compare_value(tokenList):
+    global flag
+    if tokenList[0]['next_token'] == Type.IDENT and tokenList[1]['next_token'] == Type.COLON and tokenList[2]['next_token'] == Type.IDENT:
+        pass
+    else:
+        if flag is not Flag.NOP:
+            flag = Flag.NO
+        
 def lexical(line):
     # ascii 값으로 32 이하면 전부 white-space 로 치환
     for index in range(len(line)):
@@ -102,7 +207,6 @@ def lexical(line):
             'token_string' : token_string
         })
         print(token_string, end=' ')
-    flag = False
     print('==> ID: {}; CONST: {}; OP: {}; '.format(tokenTypeList.count(Type.IDENT), 
                                                     tokenTypeList.count(Type.CONSTANT), 
                                                     len([x for x in tokenTypeList if x.value >= Type.OPERATOR.value])), end=' ')
@@ -118,4 +222,8 @@ if __name__ == "__main__":
             file.close()
             for line in lines:
                 lexical(line)
+    print("Result ==> ", end='')
+    for key, values in SYMBOL_TABLE.items():
+        print("{} : {}; ".format(key, values), end='')
+    print()
 
