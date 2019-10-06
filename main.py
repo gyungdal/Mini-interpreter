@@ -7,36 +7,38 @@ SYMBOL_TABLE = {}
 class Type(Enum):
     IDENT = auto()
     CONSTANT = auto()
-    QUESTION_OPERATOR = auto()
+    LEFT_PARENTHESIS = auto()
+    RIGHT_PARENTHESIS = auto()
     LESS_KEYWORD = auto()
     GREATER_KEYWORD = auto()
     EQUAL_KEYWORD = auto()
     COLON = auto()
-    ASSIGNMENT_OPERATOR = auto()
     SEMI_COLON = auto()
+    ASSIGNMENT_OPERATOR = auto()
     PLUS_OPERATOR = auto()
     MINUS_OPERATOR = auto()
     STAR_OPERATOR = auto()
     SLASH_OPERATOR = auto()
-    LEFT_PARENTHESIS = auto()
-    RIGHT_PARENTHESIS = auto()
+    QUESTION_OPERATOR = auto()
+    OPERATOR = PLUS_OPERATOR
 
 def token_type(token):
     tokenType = {
-        "?" : Type.QUESTION_OPERATOR,
         "<" : Type.LESS_KEYWORD,
         ">" : Type.GREATER_KEYWORD,
         "==" : Type.EQUAL_KEYWORD,
+        "(" : Type.LEFT_PARENTHESIS,
+        ")" : Type.RIGHT_PARENTHESIS,
         ":" : Type.COLON,
-        "=" : Type.ASSIGNMENT_OPERATOR,
         ";" : Type.SEMI_COLON,
+        "?" : Type.QUESTION_OPERATOR,
+        "=" : Type.ASSIGNMENT_OPERATOR,
         "+" : Type.PLUS_OPERATOR,
         "-" : Type.MINUS_OPERATOR,
         "*" : Type.STAR_OPERATOR,
-        "/" : Type.SLASH_OPERATOR,
-        "(" : Type.LEFT_PARENTHESIS,
-        ")" : Type.RIGHT_PARENTHESIS
+        "/" : Type.SLASH_OPERATOR
     }
+    # 일치하는 키워드 토큰 분리
     if token in tokenType.keys():
         return tokenType[token]
     # 숫자 분리
@@ -55,13 +57,24 @@ def lexical(line):
     # 빈 문자 제거
     tokens = list(filter(lambda a: a != '', tokens))
     #print(tokens)
-    #토큰들을 분리해서 toekn_string에 저장
+    #토큰들을 분리해서 token_string에 저장
+    lexicalList = []
+    tokenTypeList = list()
     for token_string in tokens:
-        # 토큰 타입은 next_token에 저장됨
-        # enum이니까 정수 형태임
+        # 토큰 타입은 next_token에 저장
+        # enum이니까 정수 형태
         next_token = token_type(token_string)
-        print(next_token, end=', ')
-    print('')
+        tokenTypeList.append(next_token)
+        lexicalList.append({
+            'next_token' : next_token,
+            'token_string' : token_string
+        })
+        print(token_string, end=' ')
+    flag = False
+    print('==> ID: {}; CONST: {}; OP: {}; '.format(tokenTypeList.count(Type.IDENT), 
+                                                    tokenTypeList.count(Type.CONSTANT), 
+                                                    len([x for x in tokenTypeList if x.value >= Type.OPERATOR.value])), end=' ')
+    print()
     next_token = None
 
 if __name__ == "__main__":
