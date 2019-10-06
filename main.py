@@ -94,6 +94,7 @@ def statement(tokenList):
             flag = Flag.NO
 
 def expression(tokenList):
+    global flag
     index = -1
     for idx, token in enumerate(tokenList):
         #print(token)
@@ -156,6 +157,8 @@ def term(tokenList):
 def factor(tokenList):
     global SYMBOL_TABLE
     global flag
+    if len(tokenList) < 1:
+        return 1
     type = tokenList[0]['next_token']
     if type == Type.LEFT_PARENTHESIS:
         return expression(tokenList[1:len(tokenList) - 1])
