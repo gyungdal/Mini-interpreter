@@ -89,12 +89,15 @@ def statement(tokenList):
     if len(tokenList) > 2:
         if tokenList[0]['next_token'] == Type.IDENT and tokenList[1]['next_token'] == Type.ASSIGNMENT_OPERATOR:
             val = expression(tokenList[2:])
+            #값이 string 타입이면 계산에 문제가 있다는것
             if type(val) is str :
                 SYMBOL_TABLE[tokenList[0]['token_string']] = "Unknown"
             else:
                 SYMBOL_TABLE[tokenList[0]['token_string']] = int(val)
         else:
-            flag = Flag.NO
+            # statement의 토큰 길이가 2 이하면 전제 조건이 성립되지 않아서 flag 설정
+            if flag is not Flag.NOP:
+                flag = Flag.NO
 
 def expression(tokenList):
     global flag
@@ -105,7 +108,7 @@ def expression(tokenList):
             index = idx
             break
     
-    # 내부에 semi colon이 있으면 다른거
+    # 같은 토큰이 두개 연속적으로 있을 경우 경고 메세지 띄우고 자동 복구
     if index is not -1:
         if tokenList[index]['next_token'] == tokenList[index + 1]['next_token']: 
             t = '-'
@@ -118,6 +121,7 @@ def expression(tokenList):
             flag = Flag.NOP
         val1 = term(tokenList[:index]) 
         val2 = expression(tokenList[index + 1:])
+        # 값에 오류 있는지 체크
         if tokenList[index]['next_token'] == Type.PLUS_OPERATOR:
             if type(val1) is str or type(val2) is str:
                 return "Unknown"
@@ -139,7 +143,6 @@ def term(tokenList):
             index = idx
             break
     
-    # 내부에 semi colon이 있으면 다른거
     if index is not -1:
         val1 = factor(tokenList[:index])
         val2 = term(tokenList[index + 1:])
@@ -148,8 +151,7 @@ def term(tokenList):
                 return "Unknown"
             else:
                 return int(val1) * int(val2)
-        else:
-            return 
+        else: 
             if type(val1) is str or type(val2) is str:
                 return "Unknown"
             else:
@@ -160,23 +162,26 @@ def term(tokenList):
 def factor(tokenList):
     global SYMBOL_TABLE
     global flag
+    # token이 없는경우 1반한
     if len(tokenList) < 1:
         return 1
-    type = tokenList[0]['next_token']
-    if type == Type.LEFT_PARENTHESIS:
+    # 있으면 토큰 타입에 따라서 계산함
+    t = tokenList[0]['next_token']
+    if t == Type.LEFT_PARENTHESIS:
         return expression(tokenList[1:len(tokenList) - 1])
-    elif type == Type.IDENT:
+    elif t == Type.IDENT:
         if tokenList[0]['token_string'] not in SYMBOL_TABLE.keys():
             print("<Error: 정의 되지 않은 변수({})가 참조됨>".format(tokenList[0]['token_string']))
             flag = Flag.NOP
             SYMBOL_TABLE[tokenList[0]['token_string']] = "Unknown"
         return SYMBOL_TABLE[tokenList[0]['token_string']]
-    elif type == Type.CONSTANT:
+    elif t == Type.CONSTANT:
         return int(tokenList[0]['token_string'])
 
 
 def condition(tokenList):
     global flag
+    # condition 체크
     if tokenList[0]['next_token'] == Type.LESS_KEYWORD or tokenList[0]['next_token'] == Type.GREATER_KEYWORD or tokenList[0]['next_token'] == Type.EQUAL_KEYWORD:
         pass
     else:
@@ -224,6 +229,7 @@ def lexical(line):
             'token_string' : token_string
         })
         print(token_string, end=' ')
+    #토큰 타입별 카운트
     print('==> ID: {}; CONST: {}; OP: {}; '.format(tokenTypeList.count(Type.IDENT), 
                                                     tokenTypeList.count(Type.CONSTANT), 
                                                     len([x for x in tokenTypeList if x.value >= Type.OPERATOR.value])), end=' ')
@@ -231,6 +237,7 @@ def lexical(line):
     next_token = None
 
 if __name__ == "__main__":
+    # 파일명 입력 안되면 바로 종료
     if(len(argv) != 2):
         print("NOT FOUND FILE")
     else:
@@ -239,8 +246,7 @@ if __name__ == "__main__":
             file.close()
             for line in lines:
                 lexical(line)
-    print("Result ==> ", end='')
-    for key, values in SYMBOL_TABLE.items():
-        print("{} : {}; ".format(key, values), end='')
-    print()
-
+        print("Result ==> ", end='')
+        for key, values in SYMBOL_TABLE.items():
+            print("{} : {}; ".format(key, values), end='')
+        print()
