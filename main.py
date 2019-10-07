@@ -199,6 +199,17 @@ def lexical(line):
     tokens = line.split(' ')
     # 빈 문자 제거
     tokens = list(filter(lambda a: a != '', tokens))
+    tempTokens = []
+    for token in tokens:
+        if "(" in token:
+            spl = token.split('(')
+            tempTokens.append(spl[1])
+        elif ")" in token:
+            spl = token.split(')')
+            tempTokens.append(spl[0])
+        else:
+            tempTokens.append(token)
+    tokens = tempTokens
     #print(tokens)
     #토큰들을 분리해서 token_string에 저장
     lexicalList = []
